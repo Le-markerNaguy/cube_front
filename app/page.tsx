@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { PageLayout } from "@/components/layout/page-layout"
-import { BenefitsSection } from "@/components/home/benefits-section"
-import { StepsSection } from "@/components/home/steps-section"
-import { PopularDishesSection } from "@/components/home/popular-dishes-section"
-import { Button } from "@/components/ui/button"
+import { PageLayout } from "@/components/layout/page-layout";
+import { WhyPersonalizationSection } from "@/components/home/why-personalization-section";
+import { StepsSection } from "@/components/home/steps-section";
+import { PopularDishesSection } from "@/components/home/popular-dishes-section";
+import { Button } from "@/components/ui/button";
 import {
   Heart,
   Wallet,
@@ -15,47 +15,53 @@ import {
   ListChecks,
   CreditCard,
   Loader2,
-} from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { useDishes } from "@/contexts/dishes-context"
-import { useCart } from "@/contexts/cart-context"
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useDishes } from "@/contexts/dishes-context";
+import { useCart } from "@/contexts/cart-context";
 
 const benefits = [
   {
     icon: Heart,
     title: "Goûts personnels",
-    description: "Chaque bouchée à vos goûts et envies. Créez votre plat comme vous l'aimez vraiment.",
+    description:
+      "Chaque bouchée à vos goûts et envies. Créez votre plat comme vous l'aimez vraiment.",
   },
   {
     icon: Wallet,
     title: "Budget flexible",
-    description: "Vous choisissez vos quantités selon votre budget. Dépensez ce que vous voulez.",
+    description:
+      "Vous choisissez vos quantités selon votre budget. Dépensez ce que vous voulez.",
   },
   {
     icon: Salad,
     title: "Contrôle santé",
-    description: "Un rééquilibrage est crucial le soir. Mangez sainement en personnalisant vos plats.",
+    description:
+      "Un rééquilibrage est crucial le soir. Mangez sainement en personnalisant vos plats.",
   },
   {
     icon: CheckCircle,
     title: "Liberté de choix",
-    description: "Mangez ce que vous aimez vraiment chaque jour en changeant de plat.",
+    description:
+      "Mangez ce que vous aimez vraiment chaque jour en changeant de plat.",
   },
-]
+];
 
 const steps = [
   {
     number: "1",
     icon: UserPlus,
     title: "Créer un compte",
-    description: "Inscrivez-vous pour profiter de nos avantages et commandez en quelques secondes.",
+    description:
+      "Inscrivez-vous pour profiter de nos avantages et commandez en quelques secondes.",
   },
   {
     number: "2",
     icon: UtensilsCrossed,
     title: "Choisir un plat",
-    description: "Sélectionnez votre plat de base ou personnalisez complètement votre repas.",
+    description:
+      "Sélectionnez votre plat de base ou personnalisez complètement votre repas.",
   },
   {
     number: "3",
@@ -67,17 +73,18 @@ const steps = [
     number: "4",
     icon: CreditCard,
     title: "Payer et suivre",
-    description: "Payez en ligne et suivez votre commande en temps réel jusqu'à la livraison.",
+    description:
+      "Payez en ligne et suivez votre commande en temps réel jusqu'à la livraison.",
   },
-]
+];
 
 export default function HomePage() {
-  const { popularDishes, isLoading } = useDishes()
-  const { addSimpleItem } = useCart()
+  const { popularDishes, isLoading } = useDishes();
+  const { addSimpleItem } = useCart();
 
   const handleAddToCart = (dish: any) => {
-    addSimpleItem(dish)
-  }
+    addSimpleItem(dish);
+  };
 
   return (
     <PageLayout>
@@ -91,8 +98,8 @@ export default function HomePage() {
               <span className="text-primary">comme tu l&apos;aimes</span>
             </h1>
             <p className="text-muted-foreground mb-8 text-lg">
-              Un service simple, rapide et sur mesure pour créer le repas parfait. Choisissez les ingrédients, les
-              quantités et ton budget.
+              Un service simple, rapide et sur mesure pour créer le repas
+              parfait. Choisissez les ingrédients, les quantités et ton budget.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/personnaliser">
@@ -122,7 +129,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <BenefitsSection title="Pourquoi personnaliser son repas ?" benefits={benefits} />
+      <WhyPersonalizationSection />
 
       <StepsSection
         title="Comment ça marche ?"
@@ -145,5 +152,5 @@ export default function HomePage() {
         />
       )}
     </PageLayout>
-  )
+  );
 }

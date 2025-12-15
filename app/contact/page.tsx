@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, Phone, Mail, Clock, Loader2, CheckCircle } from "lucide-react"
-import Image from "next/image"
-import { contactApi } from "@/lib/api"
-import { SUJETS_CONTACT, INFO_RESTAURANT } from "@/lib/constants"
+import type React from "react";
+import { useState } from "react";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MapPin, Phone, Mail, Clock, Loader2, CheckCircle } from "lucide-react";
+import Image from "next/image";
+import { contactApi } from "@/lib/api";
+import { SUJETS_CONTACT, INFO_RESTAURANT } from "@/lib/constants";
 
 const contactInfo = [
   {
@@ -35,7 +41,7 @@ const contactInfo = [
     label: "Horaires",
     value: `Lun-Ven: ${INFO_RESTAURANT.horaires.semaine} | Sam-Dim: ${INFO_RESTAURANT.horaires.weekend}`,
   },
-]
+];
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -44,15 +50,15 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState("")
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setError("")
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
 
     const response = await contactApi.send({
       nom: formData.name,
@@ -60,17 +66,17 @@ export default function ContactPage() {
       telephone: formData.phone,
       sujet: formData.subject,
       message: formData.message,
-    })
+    });
 
-    setIsSubmitting(false)
+    setIsSubmitting(false);
 
     if (response.success) {
-      setIsSuccess(true)
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" })
+      setIsSuccess(true);
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } else {
-      setError(response.error || "Erreur lors de l'envoi du message")
+      setError(response.error || "Erreur lors de l'envoi du message");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -80,22 +86,31 @@ export default function ContactPage() {
         <div className="container mx-auto px-4">
           {/* Page Title */}
           <div className="text-center mb-8 md:mb-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Contactez-nous</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+              Contactez-nous
+            </h1>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Une question, une réservation ou simplement envie de nous dire bonjour ? Nous sommes là pour vous
+              Une question, une réservation ou simplement envie de nous dire
+              bonjour ? Nous sommes là pour vous
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* Left Column - Contact Form */}
             <div className="bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Envoyez-nous un message</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                Envoyez-nous un message
+              </h2>
 
               {isSuccess ? (
                 <div className="text-center py-8">
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Message envoyé !</h3>
-                  <p className="text-muted-foreground mb-6">Nous vous répondrons dans les plus brefs délais.</p>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Message envoyé !
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Nous vous répondrons dans les plus brefs délais.
+                  </p>
                   <Button onClick={() => setIsSuccess(false)} variant="outline">
                     Envoyer un autre message
                   </Button>
@@ -103,7 +118,9 @@ export default function ContactPage() {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                      {error}
+                    </div>
                   )}
 
                   <div className="space-y-2">
@@ -112,7 +129,9 @@ export default function ContactPage() {
                       id="name"
                       placeholder="Votre nom"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -124,7 +143,9 @@ export default function ContactPage() {
                       type="email"
                       placeholder="votre@email.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -135,7 +156,9 @@ export default function ContactPage() {
                       id="phone"
                       placeholder="+243 XXX XXX XXX"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
                     />
                   </div>
 
@@ -143,7 +166,9 @@ export default function ContactPage() {
                     <Label htmlFor="subject">Sujet *</Label>
                     <Select
                       value={formData.subject}
-                      onValueChange={(value) => setFormData({ ...formData, subject: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, subject: value })
+                      }
                       required
                     >
                       <SelectTrigger>
@@ -165,7 +190,9 @@ export default function ContactPage() {
                       id="message"
                       placeholder="Votre message..."
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
                       rows={5}
                       required
                     />
@@ -191,7 +218,9 @@ export default function ContactPage() {
 
             {/* Right Column - Contact Info */}
             <div className="bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border h-fit">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Nos coordonnées</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                Nos coordonnées
+              </h2>
 
               <div className="space-y-6">
                 {contactInfo.map((info, index) => (
@@ -200,8 +229,12 @@ export default function ContactPage() {
                       <info.icon className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">{info.label}</p>
-                      <p className="font-medium text-foreground">{info.value}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {info.label}
+                      </p>
+                      <p className="font-medium text-foreground">
+                        {info.value}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -210,14 +243,14 @@ export default function ContactPage() {
           </div>
 
           {/* Map Section */}
-          <div className="mt-12 max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Notre localisation</h2>
-            <div className="rounded-2xl overflow-hidden border border-border h-[400px] relative">
-              <Image
-                src="/world-map-with-pins-travel-locations.jpg"
-                alt="Carte de localisation"
-                fill
-                className="object-cover"
+          <div className="w-full max-w-5xl mx-auto px-4">
+            <div className="relative w-full overflow-hidden rounded-lg shadow-lg aspect-video">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.728567995454!2d9.487387413970344!3d0.38431275009736343!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x107f3dfe099948d9%3A0x4176aeef75c65380!2sStreet%20food!5e0!3m2!1sfr!2sga!4v1765797749807!5m2!1sfr!2sga"
+                className="absolute inset-0 w-full h-full border-0"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
           </div>
@@ -226,5 +259,5 @@ export default function ContactPage() {
 
       <Footer />
     </div>
-  )
+  );
 }

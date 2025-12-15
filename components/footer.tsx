@@ -34,16 +34,16 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li>+243 XXX XXX XXX</li>
+              <li>+241 XXX XXX XXX</li>
               <li>contact@cube.com</li>
-              <li>Kinshasa, RDC</li>
+              <li>Libreville, Gabon</li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Horaires</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li>Lun - Ven: 10h - 22h</li>
-              <li>Sam - Dim: 11h - 23h</li>
+              <li>Lun - Ven: 10h - 21h</li>
+              <li>Sam - Dim: 11h - 20h</li>
             </ul>
           </div>
         </div>
