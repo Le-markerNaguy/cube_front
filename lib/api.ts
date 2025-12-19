@@ -518,6 +518,66 @@ export const clientsApi = {
 }
 
 // ==========================================
+// API ADMINS (Super Admin)
+// ==========================================
+
+export interface AdminRequest {
+  nom: string
+  email?: string
+  mot_de_passe: string
+}
+
+export interface AdminResponse {
+  id: string
+  nom: string
+  email?: string
+  date_creation?: string
+}
+
+export const adminsApi = {
+  // Récupérer tous les administrateurs
+  getAll: async (): Promise<ApiResponse<AdminResponse[]>> => {
+    return apiRequest<AdminResponse[]>("/admins")
+  },
+
+  // Récupérer un administrateur par ID
+  getById: async (id: string): Promise<ApiResponse<AdminResponse>> => {
+    return apiRequest<AdminResponse>(`/admins/${id}`)
+  },
+
+  // Créer un administrateur
+  create: async (data: AdminRequest): Promise<ApiResponse<AdminResponse>> => {
+    return apiRequest<AdminResponse>("/admins", {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.nom,
+        email: data.email,
+        password: data.mot_de_passe,
+      }),
+    })
+  },
+
+  // Mettre à jour un administrateur
+  update: async (id: string, data: Partial<AdminRequest>): Promise<ApiResponse<AdminResponse>> => {
+    return apiRequest<AdminResponse>(`/admins/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        ...(data.nom ? { name: data.nom } : {}),
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.mot_de_passe ? { password: data.mot_de_passe } : {}),
+      }),
+    })
+  },
+
+  // Supprimer un administrateur
+  delete: async (id: string): Promise<ApiResponse<null>> => {
+    return apiRequest<null>(`/admins/${id}`, {
+      method: "DELETE",
+    })
+  },
+}
+
+// ==========================================
 // API PANIER
 // ==========================================
 

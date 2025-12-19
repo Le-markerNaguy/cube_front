@@ -125,7 +125,6 @@ export default function AdminPlats() {
         categorie: dish.categorie,
         prix_base: dish.prix_base,
         image: dish.image ?? "",
-        statut_stock: dish.statut_stock,
         statut: dish.statut,
       })
       setImagePreview(dish.image ?? null)
@@ -136,7 +135,6 @@ export default function AdminPlats() {
         categorie: "Burgers",
         prix_base: 0,
         image: "",
-        statut_stock: "en_stock",
         statut: "actif",
       })
       setImagePreview(null)
@@ -156,7 +154,6 @@ export default function AdminPlats() {
     categorie: "Burgers",
     prix_base: 0,
     image: "",
-    statut_stock: "en_stock" as StatutStock,
     statut: "actif" as StatutPlat,
   })
 
@@ -184,7 +181,6 @@ export default function AdminPlats() {
         categorie: formData.categorie,
         image: formData.image || "/delicious-food-dish.png",
         statut: formData.statut,
-        statut_stock: formData.statut_stock,
       }
       addPlat(newDish)
     } else if (modalMode === "edit" && selectedDish) {
@@ -194,8 +190,7 @@ export default function AdminPlats() {
         categorie: formData.categorie,
         prix_base: formData.prix_base,
         image: formData.image || selectedDish.image,
-        statut: formData.statut,
-        statut_stock: formData.statut_stock,
+        statut: formData.statut
       })
     }
     closeModal()
@@ -280,7 +275,6 @@ export default function AdminPlats() {
                   <th className="p-4 font-medium">Nom du plat</th>
                   <th className="p-4 font-medium hidden md:table-cell">Catégorie</th>
                   <th className="p-4 font-medium">Prix</th>
-                  <th className="p-4 font-medium hidden sm:table-cell">Stock</th>
                   <th className="p-4 font-medium hidden lg:table-cell">Statut</th>
                   <th className="p-4 font-medium">Actions</th>
                 </tr>
@@ -307,11 +301,6 @@ export default function AdminPlats() {
                       </span>
                     </td>
                     <td className="p-4 font-semibold text-gray-900">{dish.prix_base.toFixed(2)} f</td>
-                    <td className="p-4 hidden sm:table-cell">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStockStyle(dish.statut_stock)}`}>
-                        {getStockLabel(dish.statut_stock)}
-                      </span>
-                    </td>
                     <td className="p-4 hidden lg:table-cell">
                       <div className="flex items-center gap-2">
                         <span className={`text-sm ${dish.statut === "actif" ? "text-gray-900" : "text-gray-400"}`}>
@@ -453,9 +442,6 @@ export default function AdminPlats() {
                         <span className={`px-3 py-1 rounded-full text-sm ${getCategoryStyle(selectedDish.categorie)}`}>
                           {selectedDish.categorie}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-sm ${getStockStyle(selectedDish.statut_stock)}`}>
-                          {getStockLabel(selectedDish.statut_stock)}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -525,21 +511,6 @@ export default function AdminPlats() {
                           setFormData((prev) => ({ ...prev, prix_base: Number.parseFloat(e.target.value) || 0 }))
                         }
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="stock">Statut du stock</Label>
-                      <select
-                        id="stock"
-                        className="w-full border rounded-lg px-3 py-2"
-                        value={formData.statut_stock}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, statut_stock: e.target.value as StatutStock }))
-                        }
-                      >
-                        <option value="en_stock">En stock</option>
-                        <option value="stock_bas">Stock bas</option>
-                        <option value="rupture">Rupture</option>
-                      </select>
                     </div>
                   </div>
 

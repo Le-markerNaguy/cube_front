@@ -8,11 +8,39 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { Trash2, ShoppingBag } from "lucide-react"
-import { platsBase, platsAccompagnement, platsSupplément } from "@/lib/data"
+import { platsApi, type PlatResponse } from "@/lib/api"
+import { useEffect, useState } from "react"
 
 export default function PanierPage() {
   const { items, itemCount, sousTotal, fraisLivraison, tva, total, removeItem, updateQuantity, clearCart } = useCart()
   const { isAuthenticated } = useAuth()
+
+  const [bases, setBases] = useState<PlatResponse[]>([])
+  const [accompagnements, setAccompagnements] = useState<PlatResponse[]>([])
+  const [supplements, setSupplements] = useState<PlatResponse[]>([])
+
+  useEffect(() => {
+    let mounted = true
+
+    const load = async () => {
+      const [bRes, aRes, sRes] = await Promise.all([
+        platsApi.getBases(),
+        platsApi.getAccompagnements(),
+        platsApi.getSupplements(),
+      ])
+
+      if (!mounted) return
+
+      if (bRes.success) setBases(bRes.data || [])
+      if (aRes.success) setAccompagnements(aRes.data || [])
+      if (sRes.success) setSupplements(sRes.data || [])
+    }
+
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // Helper pour obtenir les détails d'un item
   const getItemDetails = (item: (typeof items)[0]) => {
@@ -24,17 +52,35 @@ export default function PanierPage() {
       }
     }
 
-    const base = platsBase.find((p) => p.id === item.platPersonnalise?.id_plat_base)
-    const accompagnements = item.platPersonnalise?.accompagnements
-      .map((a) => platsAccompagnement.find((p) => p.id === a.id_plat)?.nom)
+    // Supporter différentes formes de personnalisation (nouvelle forme avec `personnalisation` ou ancienne forme avec `platPersonnalise`)
+    const baseFromCart = (item as any).personnalisation?.base?.plat
+    const baseFromPersonnalisationId = (item as any).personnalisation?.base?.id_plat
+      ? bases.find((p) => p.id === (item as any).personnalisation.base.id_plat)
+      : null
+    const baseFromOldIds = (item as any).platPersonnalise?.id_plat_base
+      ? bases.find((p) => p.id === (item as any).platPersonnalise.id_plat_base)
+      : null
+
+    const base = baseFromCart || baseFromPersonnalisationId || baseFromOldIds
+
+    const getNameFromPossibilities = (entry: any, list: PlatResponse[], idKey = "id_plat") => {
+      if (!entry) return undefined
+      if (entry.plat?.nom) return entry.plat.nom
+      if (entry[idKey]) return list.find((p) => p.id === entry[idKey])?.nom
+      return undefined
+    }
+
+    const accompNames = ((item as any).personnalisation?.accompagnements || (item as any).platPersonnalise?.accompagnements || [])
+      .map((a: any) => getNameFromPossibilities(a, accompagnements))
       .filter(Boolean)
-    const supplements = item.platPersonnalise?.supplements
-      .map((s) => platsSupplément.find((p) => p.id === s.id_plat)?.nom)
+
+    const suppNames = ((item as any).personnalisation?.supplements || (item as any).platPersonnalise?.supplements || [])
+      .map((s: any) => getNameFromPossibilities(s, supplements))
       .filter(Boolean)
 
     return {
-      name: `${base?.nom} (Personnalisé)`,
-      description: [...(accompagnements || []), ...(supplements || [])].join(", ") || undefined,
+      name: base?.nom ? `${base.nom} (Personnalisé)` : "Personnalisé",
+      description: [...accompNames, ...suppNames].join(", ") || undefined,
       image: base?.image || "/placeholder.svg",
     }
   }

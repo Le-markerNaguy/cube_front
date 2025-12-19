@@ -92,27 +92,31 @@ export function Header() {
             
           )}
 
-          {/* Cart */}
-          <Link href="/panier" className="relative">
-            <ShoppingCart className="w-6 h-6 text-foreground" />
-            {itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+          {/* Cart - visible seulement si connecté */}
+          {isAuthenticated && (
+            <Link href="/panier" className="relative">
+              <ShoppingCart className="w-6 h-6 text-foreground" />
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-4">
-          <Link href="/panier" className="relative">
-            <ShoppingCart className="w-6 h-6 text-foreground" />
-            {itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </Link>
+          {isAuthenticated && (
+            <Link href="/panier" className="relative">
+              <ShoppingCart className="w-6 h-6 text-foreground" />
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          )}
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -11,17 +11,22 @@ import { Package, Eye, Clock, CheckCircle, Truck, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import type { StatutCommande } from "@/lib/types"
+import { commandesApi, type CommandeResponse } from "@/lib/api"
 
 const statutConfig: Record<StatutCommande, { label: string; color: string; icon: typeof Package }> = {
   en_attente: { label: "Nouveau", color: "bg-blue-100 text-blue-700", icon: Clock },
   en_preparation: { label: "En préparation", color: "bg-yellow-100 text-yellow-700", icon: Package },
+  confirmee: { label: "Confirmée", color: "bg-teal-100 text-teal-700", icon: CheckCircle },
   en_livraison: { label: "En livraison", color: "bg-purple-100 text-purple-700", icon: Truck },
   livree: { label: "Livrée", color: "bg-green-100 text-green-700", icon: CheckCircle },
   annulee: { label: "Annulée", color: "bg-red-100 text-red-700", icon: XCircle },
 }
 
 export default function MesCommandesPage() {
-  const { isAuthenticated, isLoading, commandes } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
+  const [commandesList, setCommandesList] = useState<CommandeResponse[]>([])
+  const [loadingCommandes, setLoadingCommandes] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -29,6 +34,32 @@ export default function MesCommandesPage() {
       router.push("/connexion")
     }
   }, [isAuthenticated, isLoading, router])
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      if (!isAuthenticated) return
+      setLoadingCommandes(true)
+      setFetchError(null)
+
+      const res = await commandesApi.getMine()
+      if (!mounted) return
+      setLoadingCommandes(false)
+
+      if (!res.success) {
+        setFetchError(res.error || res.message || "Erreur lors du chargement des commandes")
+        setCommandesList([])
+        return
+      }
+
+      setCommandesList(res.data || [])
+    }
+
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [isAuthenticated])
 
   if (isLoading) {
     return (
@@ -51,7 +82,22 @@ export default function MesCommandesPage() {
           <h1 className="text-3xl font-bold mb-2">Mes commandes</h1>
           <p className="text-muted-foreground mb-8">Historique de toutes vos commandes</p>
 
-          {commandes.length === 0 ? (
+          {loadingCommandes && (
+            <Card className="p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-6"></div>
+              <p className="text-muted-foreground">Chargement de vos commandes...</p>
+            </Card>
+          )}
+
+          {fetchError && (
+            <Card className="p-6 text-center">
+              <h2 className="text-lg font-semibold mb-2">Erreur</h2>
+              <p className="text-muted-foreground mb-4">{fetchError}</p>
+              <Button onClick={() => window.location.reload()}>Réessayer</Button>
+            </Card>
+          )}
+
+          {commandesList.length === 0 ? (
             <Card className="p-12 text-center">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
                 <Package className="w-10 h-10 text-primary" />
@@ -64,7 +110,7 @@ export default function MesCommandesPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {commandes.map((commande) => {
+              {commandesList.map((commande) => {
                 const config = statutConfig[commande.statut_commande]
                 const Icon = config.icon
 
@@ -73,7 +119,7 @@ export default function MesCommandesPage() {
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <Icon className="w-6 h-6 text-primary" />
                           </div>
                           <div>

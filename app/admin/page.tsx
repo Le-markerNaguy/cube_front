@@ -181,7 +181,8 @@ export default function AdminDashboard() {
               {revenueData.map((item, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                    className="w-full bg-orange-500 rounded-t-md transition-all hover:bg-orange-600"
+                   className="w-full bg-slate-800 rounded-t-md transition-all hover:bg-slate-900"
+
                     style={{ height: `${item.value}%` }}
                   />
                   <span className="text-xs text-gray-500">{item.day}</span>

@@ -28,7 +28,7 @@ export default function MenuPage() {
   return (
     <PageLayout className="bg-secondary/30">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-secondary to-background py-12">
+      <section className="bg-linear-to-b from-secondary to-background py-12">
         <div className="container mx-auto px-4">
           <PageHeader
             title="Menu Cube"

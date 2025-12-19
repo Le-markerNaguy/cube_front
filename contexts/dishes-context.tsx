@@ -12,7 +12,6 @@ interface Plat {
   categorie: string
   image?: string
   statut: "actif" | "inactif"
-  statut_stock: "en_stock" | "stock_bas" | "rupture"
   variations?: {
     id: string
     id_plat: string
@@ -88,7 +87,6 @@ export function DishesProvider({ children }: { children: ReactNode }) {
     categorie: apiPlat.categorie,
     image: apiPlat.image,
     statut: apiPlat.statut,
-    statut_stock: apiPlat.statut_stock,
     variations: apiPlat.variations,
   })
 
@@ -165,7 +163,6 @@ export function DishesProvider({ children }: { children: ReactNode }) {
         categorie: plat.categorie,
         image: plat.image,
         statut: plat.statut,
-        statut_stock: plat.statut_stock,
         variations: plat.variations?.map((v) => ({
           taille: v.taille,
           prix: v.prix,
@@ -193,7 +190,6 @@ export function DishesProvider({ children }: { children: ReactNode }) {
         categorie: updates.categorie,
         image: updates.image,
         statut: updates.statut,
-        statut_stock: updates.statut_stock,
       })
 
       if (!response.success) {

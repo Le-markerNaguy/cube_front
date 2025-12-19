@@ -26,7 +26,6 @@ export interface Plat {
   categorie: string
   image?: string
   statut: StatutPlat
-  statut_stock: StatutStock
   variations?: VariationPlat[]
 }
 
@@ -96,7 +95,7 @@ export interface LignePanier {
 }
 
 // COMMANDE
-export type StatutCommande = "en_attente" | "en_preparation" | "en_livraison" | "livree" | "annulee"
+export type StatutCommande = "en_attente" | "confirmee" | "en_preparation" | "en_livraison" | "livree" | "annulee"
 
 export interface Commande {
   id: string
