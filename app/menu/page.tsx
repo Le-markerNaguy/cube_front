@@ -26,13 +26,13 @@ export default function MenuPage() {
   }
 
   return (
-    <PageLayout className="bg-secondary/30">
+    <PageLayout className="bg-background">
       {/* Hero */}
-      <section className="bg-linear-to-b from-secondary to-background py-12">
+      <section className="bg-muted/40 py-12 mb-8">
         <div className="container mx-auto px-4">
           <PageHeader
             title="Menu Cube"
-            subtitle="Choisissez un plat et personnalisez-le selon vos envies"
+            subtitle="Choisissez un plat déjà personnalisé par le CUBE ou créez le vôtre !"
             className="mb-8"
           />
           <CategoryFilter
@@ -45,10 +45,6 @@ export default function MenuPage() {
 
       {/* Dishes Grid */}
       <section className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-center mb-2">Plat déjà personnalisé par le CUBE</h2>
-        <p className="text-muted-foreground text-center mb-8">
-          Faites directement votre commande parmi les plats conçus par le CUBE
-        </p>
 
         {isLoading ? (
           <div className="flex justify-center py-12">

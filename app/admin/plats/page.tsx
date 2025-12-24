@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useDishes } from "@/contexts/dishes-context"
-import type { Plat, StatutPlat, StatutStock } from "@/lib/types"
+import type { Plat, StatutPlat } from "@/lib/types"
 
 const categoriesAdmin = [
   "Toutes catégories",
@@ -25,31 +25,6 @@ const categoriesAdmin = [
 ]
 const statuses = ["Tous statuts", "Actif", "Inactif"]
 
-function getStockStyle(stock: StatutStock) {
-  switch (stock) {
-    case "en_stock":
-      return "bg-green-100 text-green-700"
-    case "stock_bas":
-      return "bg-yellow-100 text-yellow-700"
-    case "rupture":
-      return "bg-red-100 text-red-700"
-    default:
-      return "bg-gray-100 text-gray-700"
-  }
-}
-
-function getStockLabel(stock: StatutStock) {
-  switch (stock) {
-    case "en_stock":
-      return "En stock"
-    case "stock_bas":
-      return "Stock bas"
-    case "rupture":
-      return "Rupture"
-    default:
-      return stock
-  }
-}
 
 function getCategoryStyle(category: string) {
   switch (category) {
@@ -119,11 +94,21 @@ export default function AdminPlats() {
     setModalMode(mode)
     setSelectedDish(dish || null)
     if (dish && mode === "edit") {
+      // prefill size prices if dish has variations
+      const petit = (dish.variations || []).find((v) => v.taille === "petit")
+      const moyen = (dish.variations || []).find((v) => v.taille === "moyen")
+      const grand = (dish.variations || []).find((v) => v.taille === "grand")
+
       setFormData({
         nom: dish.nom,
         description: dish.description,
+        // set target based on existing dish type
+        target: dish.type === "menu" ? "menu" : "personnalisation",
         categorie: dish.categorie,
         prix_base: dish.prix_base,
+        petit_prix: petit ? petit.prix : 0,
+        moyen_prix: moyen ? moyen.prix : 0,
+        grand_prix: grand ? grand.prix : 0,
         image: dish.image ?? "",
         statut: dish.statut,
       })
@@ -132,8 +117,13 @@ export default function AdminPlats() {
       setFormData({
         nom: "",
         description: "",
-        categorie: "Burgers",
+        // default target for new dishes: menu
+        target: "menu",
+        categorie: "Plat-menus",
         prix_base: 0,
+        petit_prix: 0,
+        moyen_prix: 0,
+        grand_prix: 0,
         image: "",
         statut: "actif",
       })
@@ -151,8 +141,14 @@ export default function AdminPlats() {
   const [formData, setFormData] = useState({
     nom: "",
     description: "",
-    categorie: "Burgers",
+    // target indicates whether the dish is for the menu or for personnalisation
+    target: "menu" as "menu" | "personnalisation",
+    categorie: "Plat-menus",
     prix_base: 0,
+    // Prix par taille (pour Bases / Accompagnements / Suppléments)
+    petit_prix: 0,
+    moyen_prix: 0,
+    grand_prix: 0,
     image: "",
     statut: "actif" as StatutPlat,
   })
@@ -170,27 +166,63 @@ export default function AdminPlats() {
     }
   }
 
+  const determineType = (target: string, categorie: string) => {
+    if (target === "menu") return "menu"
+    if (categorie === "Bases") return "base"
+    if (categorie === "Accompagnements") return "accompagnement"
+    if (categorie === "Suppléments") return "supplement"
+    return "menu"
+  }
+
+  const personalizationCategories = ["Bases", "Accompagnements", "Suppléments"]
+  const menuCategories = categoriesAdmin.filter((c) => c !== "Toutes catégories" && !personalizationCategories.includes(c))
+
+  const buildVariationsFromForm = () => {
+    // Always include the three tailles for personnalisation (the backend expects petit/moyen/grand)
+    const petit = Number((formData as any).petit_prix) || 0
+    const moyen = Number((formData as any).moyen_prix) || 0
+    const grand = Number((formData as any).grand_prix) || 0
+    return [
+      { taille: "petit", prix: petit },
+      { taille: "moyen", prix: moyen },
+      { taille: "grand", prix: grand },
+    ]
+  }
+
   const handleSave = () => {
+    const type = determineType(formData.target, formData.categorie)
+    const isPersonalization = formData.target === "personnalisation" && personalizationCategories.includes(formData.categorie)
+
     if (modalMode === "add") {
+      const vars = isPersonalization ? buildVariationsFromForm() : []
+      const nonZero = vars.filter((v) => v.prix > 0)
+      const prixBase = nonZero.length > 0 ? Math.min(...nonZero.map((v) => v.prix)) : formData.prix_base
+
       const newDish: Plat = {
         id: `menu-${Date.now()}`,
         nom: formData.nom,
         description: formData.description,
-        type: "menu",
-        prix_base: formData.prix_base,
+        type: type as Plat["type"],
+        prix_base: prixBase,
         categorie: formData.categorie,
         image: formData.image || "/delicious-food-dish.png",
         statut: formData.statut,
+        variations: vars.length > 0 ? vars.map((v) => ({ id: `var-${Date.now()}-${v.taille}`, id_plat: "", taille: v.taille as "petit" | "moyen" | "grand", prix: v.prix })) : undefined,
       }
       addPlat(newDish)
     } else if (modalMode === "edit" && selectedDish) {
+      const vars = isPersonalization ? buildVariationsFromForm() : undefined
+      const nonZeroEdit = vars ? vars.filter((v) => v.prix > 0) : undefined
+      const prixBase = nonZeroEdit && nonZeroEdit.length > 0 ? Math.min(...nonZeroEdit.map((v) => v.prix)) : formData.prix_base
+
       updatePlat(selectedDish.id, {
         nom: formData.nom,
         description: formData.description,
         categorie: formData.categorie,
-        prix_base: formData.prix_base,
+        prix_base: prixBase,
         image: formData.image || selectedDish.image,
-        statut: formData.statut
+        statut: formData.statut,
+        variations: vars ? vars.map((v, i) => ({ id: selectedDish.variations?.[i]?.id || `var-${Date.now()}-${i}`, id_plat: selectedDish.id, taille: v.taille as "petit" | "moyen" | "grand", prix: v.prix })) : undefined,
       })
     }
     closeModal()
@@ -450,6 +482,16 @@ export default function AdminPlats() {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-gray-500 text-sm">Prix de base</p>
                       <p className="text-2xl font-bold text-orange-500">{selectedDish.prix_base.toFixed(2)} f</p>
+                      {selectedDish.variations && selectedDish.variations.length > 0 && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          {selectedDish.variations.map((v) => (
+                            <div key={v.id} className="flex justify-between">
+                              <span>{v.taille.charAt(0).toUpperCase() + v.taille.slice(1)}</span>
+                              <span className="font-medium">{v.prix.toFixed(2)} f</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-gray-500 text-sm">Statut</p>
@@ -470,6 +512,24 @@ export default function AdminPlats() {
                       />
                     </div>
                     <div className="space-y-2">
+                      <Label>Ajouter pour</Label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className={`px-3 py-1 rounded ${formData.target === "menu" ? "bg-orange-500 text-white" : "bg-gray-100"}`}
+                          onClick={() => setFormData((prev) => ({ ...prev, target: "menu", categorie: "Plat-menus" }))}
+                        >
+                          Plat du menu
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-3 py-1 rounded ${formData.target === "personnalisation" ? "bg-orange-500 text-white" : "bg-gray-100"}`}
+                          onClick={() => setFormData((prev) => ({ ...prev, target: "personnalisation", categorie: "Bases" }))}
+                        >
+                          Pour personnalisation
+                        </button>
+                      </div>
+
                       <Label htmlFor="category">Catégorie *</Label>
                       <select
                         id="category"
@@ -477,13 +537,11 @@ export default function AdminPlats() {
                         value={formData.categorie}
                         onChange={(e) => setFormData((prev) => ({ ...prev, categorie: e.target.value }))}
                       >
-                        {categoriesAdmin
-                          .filter((c) => c !== "Toutes catégories")
-                          .map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
+                        {(formData.target === "personnalisation" ? personalizationCategories : menuCategories).map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -500,18 +558,54 @@ export default function AdminPlats() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Prix (f) *</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={formData.prix_base}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, prix_base: Number.parseFloat(e.target.value) || 0 }))
-                        }
-                      />
-                    </div>
+                    {/** Affiche 3 champs de prix si on crée un plat pour la personnalisation dans les catégories concernées */}
+                    {formData.target === "personnalisation" && personalizationCategories.includes(formData.categorie) ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="petit">Prix Petit (f) *</Label>
+                          <Input
+                            id="petit"
+                            type="number"
+                            step="0.01"
+                            value={(formData as any).petit_prix}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, petit_prix: Number(e.target.value) || 0 }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="moyen">Prix Moyen (f) *</Label>
+                          <Input
+                            id="moyen"
+                            type="number"
+                            step="0.01"
+                            value={(formData as any).moyen_prix}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, moyen_prix: Number(e.target.value) || 0 }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="grand">Prix Grand (f) *</Label>
+                          <Input
+                            id="grand"
+                            type="number"
+                            step="0.01"
+                            value={(formData as any).grand_prix}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, grand_prix: Number(e.target.value) || 0 }))}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Prix (f) *</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          value={formData.prix_base}
+                          onChange={(e) =>
+                            setFormData((prev) => ({ ...prev, prix_base: Number.parseFloat(e.target.value) || 0 }))
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

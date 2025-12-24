@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation"
 export default function ConnexionPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [phone, setPhone] = useState("")
+  const [email, setEmail] = useState("")
+  const [isEmailValid, setIsEmailValid] = useState<boolean>(true)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const { login, isAuthenticated, isLoading } = useAuth()
@@ -30,7 +32,24 @@ export default function ConnexionPage() {
     e.preventDefault()
     setError("")
 
-    const result = await login(phone, password)
+    if (!phone && !email) {
+      setError("Veuillez renseigner le numéro de téléphone ou l'email")
+      return
+    }
+
+    if (email && !isEmailValid) {
+      setError("Email invalide")
+      return
+    }
+
+    if (!password) {
+      setError("Veuillez renseigner le mot de passe")
+      return
+    }
+
+    const identifier = email || phone
+
+    const result = await login(identifier, password)
     if (result.success) {
       router.push("/menu")
     } else {
@@ -41,7 +60,7 @@ export default function ConnexionPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Side - Orange Branding */}
-      <div className="lg:w-1/2 bg-primary text-primary-foreground p-8 lg:p-12 flex flex-col justify-center">
+      <div className="lg:w-1/2 bg-primary text-primary-foreground p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
           <Link href="/">
             <h1 className="text-4xl lg:text-5xl font-bold mb-4">CUBE</h1>
@@ -54,7 +73,7 @@ export default function ConnexionPage() {
               alt="Plat délicieux"
               width={400}
               height={300}
-              className="w-full h-64 object-cover"
+              className="w-full h-48 sm:h-64 object-cover"
             />
           </div>
 
@@ -88,20 +107,46 @@ export default function ConnexionPage() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="phone">Numéro de téléphone</Label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 bg-muted border border-r-0 border-border rounded-l-md text-muted-foreground">
-                  +243
-                </span>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="XXX XXX XXX"
-                  className="rounded-l-none"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="XXX XXX XXX"
+                className="w-full"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email (optionnel)</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="votre@email.com"
+                value={email}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setEmail(v)
+                  if (v === "") {
+                    setIsEmailValid(true)
+                    return
+                  }
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                  setIsEmailValid(emailRegex.test(v))
+                }}
+                className="w-full"
+                aria-invalid={!isEmailValid}
+                aria-describedby="email-help"
+              />
+              {email ? (
+                !isEmailValid ? (
+                  <p id="email-help" className="text-sm text-red-600">Email invalide</p>
+                ) : (
+                  <p id="email-help" className="text-sm text-muted-foreground">Email optionnel, utilisé pour retrouver votre compte</p>
+                )
+              ) : (
+                <p id="email-help" className="text-sm text-muted-foreground">Email optionnel, utilisé pour retrouver votre compte</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -114,6 +159,7 @@ export default function ConnexionPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="w-full"
                 />
                 <button
                   type="button"
@@ -132,8 +178,8 @@ export default function ConnexionPage() {
 
             <Button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6"
-              disabled={isLoading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 sm:py-6"
+              disabled={isLoading || (!!email && !isEmailValid) || (!phone && !email) || !password}
             >
               {isLoading ? (
                 <>

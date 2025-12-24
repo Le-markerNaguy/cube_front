@@ -24,6 +24,8 @@ export default function CommandePage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("airtel_money")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  // Montant en espèces annoncé par le client (format string pour contrôle de l'input)
+  const [cashAmount, setCashAmount] = useState<string>("")
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -87,6 +89,26 @@ export default function CommandePage() {
     setIsSubmitting(true)
     setError("")
 
+    // Validation pour paiement à la livraison
+    if (selectedPayment === "livraison") {
+      if (!cashAmount) {
+        setError("Veuillez indiquer le montant en espèces que vous aurez à la livraison")
+        setIsSubmitting(false)
+        return
+      }
+      const cashNum = Number(cashAmount)
+      if (Number.isNaN(cashNum) || cashNum <= 0) {
+        setError("Le montant en espèces doit être un nombre valide supérieur à 0")
+        setIsSubmitting(false)
+        return
+      }
+      if (cashNum < total) {
+        setError("Le montant en espèces est inférieur au total de la commande")
+        setIsSubmitting(false)
+        return
+      }
+    }
+
     // Préparer les items pour l'API
     const commandeItems = items.map((item) => ({
       id_plat: item.type === "simple" ? item.plat?.id || "" : item.personnalisation?.base.plat.id || "",
@@ -110,14 +132,23 @@ export default function CommandePage() {
           : undefined,
     }))
 
-    const response = await commandesApi.create({
+    const payload: any = {
       adresse_livraison: formData.address,
       ville: formData.city,
       commune: formData.commune,
       instructions: formData.instructions,
       mode_paiement: selectedPayment as "airtel_money" | "mobile_cash" | "livraison",
       items: commandeItems,
-    })
+    }
+
+    // Inclure le montant en espèces (si applicable)
+    if (selectedPayment === "livraison" && cashAmount) {
+      payload.montant_en_especes = Number(cashAmount)
+      // Pour compatibilité backend si non supporté, ajouter aussi dans les instructions
+      payload.instructions = `${payload.instructions || ""}\nMontant en espèces annoncé: ${Number(cashAmount).toFixed(2)}f`
+    }
+
+    const response = await commandesApi.create(payload)
 
     setIsSubmitting(false)
 
@@ -273,6 +304,28 @@ export default function CommandePage() {
                     </label>
                   ))}
                 </div>
+
+                {/* Montant en espèces (si paiement à la livraison) */}
+                {selectedPayment === "livraison" && (
+                  <div className="mt-4">
+                    <Label htmlFor="cash">Montant en espèces que vous aurez à la livraison *</Label>
+                    <Input
+                      id="cash"
+                      type="number"
+                      min={0}
+                      placeholder="Entrez le montant exact en f"
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                    />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Montant total: <span className="font-medium">{total.toFixed(2)}f</span>. {cashAmount && Number(cashAmount) >= total
+                        ? `Monnaie à préparer: ${(Number(cashAmount) - total).toFixed(2)}f`
+                        : cashAmount
+                        ? "Le montant indiqué est inférieur au total"
+                        : ""}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

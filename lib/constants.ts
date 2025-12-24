@@ -72,12 +72,7 @@ export const STATUTS_COMMANDE = {
   annulee: { label: "Annulée", color: "bg-red-100 text-red-800" },
 }
 
-// Statuts de stock
-export const STATUTS_STOCK = {
-  en_stock: { label: "En stock", color: "bg-green-100 text-green-800" },
-  stock_bas: { label: "Stock bas", color: "bg-yellow-100 text-yellow-800" },
-  rupture: { label: "Rupture", color: "bg-red-100 text-red-800" },
-}
+
 
 // Tailles disponibles
 export const TAILLES = [

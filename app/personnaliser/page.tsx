@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Minus, Plus, Check, ShoppingCart } from "lucide-react"
+import { Minus, Plus, Check, ShoppingCart, Sparkles } from "lucide-react"
 import Image from "next/image"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
@@ -33,7 +33,6 @@ export default function PersonnaliserPage() {
     categorie: "",
     image: "",
     statut: "actif",
-    statut_stock: "en_stock",
     variations: [],
     created_at: "",
     updated_at: "",
@@ -42,6 +41,7 @@ export default function PersonnaliserPage() {
   // Base selection
   const [selectedBaseId, setSelectedBaseId] = useState<string>("")
   const [selectedVariationTaille, setSelectedVariationTaille] = useState<string>("moyen")
+  const [selectedBaseSizes, setSelectedBaseSizes] = useState<Record<string, string>>({})
 
   // Accompaniments (multiple selection with variations)
   const [selectedAccompaniments, setSelectedAccompaniments] = useState<
@@ -55,7 +55,9 @@ export default function PersonnaliserPage() {
   const [quantity, setQuantity] = useState(1)
 
   const selectedBase = platsBase.find((p) => p.id === selectedBaseId) || platsBase[0] || defaultPlat
-  const selectedBaseVariation = selectedBase.variations?.find((v) => v.taille === selectedVariationTaille)
+  const selectedBaseVariation = selectedBase.variations?.find(
+    (v) => v.taille === (selectedBaseSizes[selectedBaseId] || selectedVariationTaille),
+  )
 
   // Calculate prices
   const basePrice = selectedBaseVariation?.prix || 0
@@ -171,82 +173,148 @@ export default function PersonnaliserPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30">
+    <div className="min-h-screen flex flex-col bg-linear-to-br from-background via-accent/20 to-background">
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Personnalise ton repas</h1>
-            <p className="text-muted-foreground">Crée le plat parfait selon tes envies et tes goûts</p>
+        <div className="container mx-auto px-4 py-12 max-w-7xl">
+          <div className="text-center mb-12 space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10 mb-4">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-balance bg-linear-to-br from-foreground to-foreground/70 bg-clip-text">
+              Personnalise ton repas
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
+              Crée le plat parfait selon tes envies et tes goûts
+            </p>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Selection Sections */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-6">
               {/* Section 1: Base */}
-              <Card>
-                <CardHeader>
-                  <p className="text-sm text-primary font-medium">SECTION 1</p>
-                  <CardTitle>Choisir la base</CardTitle>
-                  <p className="text-sm text-muted-foreground">Sélectionne l&apos;élément principal de ton plat</p>
+              <Card className="border-2 shadow-lg">
+                <CardHeader className="space-y-2 pb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded bg-primary/10 text-primary text-sm font-bold">
+                      1
+                    </span>
+                    <div>
+                      <CardTitle className="text-2xl">Choisir la base</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Sélectionne l&apos;élément principal de ton plat
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    {platsBase.map((base) => (
-                      <div
-                        key={base.id}
-                        onClick={() => setSelectedBaseId(base.id)}
-                        className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedBaseId === base.id
-                            ? "border-primary shadow-lg"
-                            : "border-transparent hover:border-muted"
-                        }`}
-                      >
-                        <Image
-                          src={base.image || "/placeholder.svg"}
-                          alt={base.nom}
-                          width={200}
-                          height={150}
-                          className="w-full h-24 object-cover"
-                        />
-                        <div className="p-2 bg-card">
-                          <h4 className="font-medium text-sm">{base.nom}</h4>
-                          <p className="text-xs text-muted-foreground">{base.description}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {platsBase.map((base) => {
+                      const isSelected = selectedBaseId === base.id
+                      const currentSize = selectedBaseSizes[base.id] || "moyen"
+
+                      return (
+                        <div
+                          key={base.id}
+                          className={`group overflow-hidden border-2 transition-all duration-200 ${
+                            isSelected
+                              ? "border-primary bg-primary/5 shadow-lg"
+                              : "border-border hover:border-primary/50 hover:shadow-md"
+                          }`}
+                        >
+                          <div className="relative h-40">
+                            <Image
+                              src={base.image || "/placeholder.svg"}
+                              alt={base.nom}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+                            <div className="absolute top-3 left-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => {
+                                  setSelectedBaseId(base.id)
+                                  if (!selectedBaseSizes[base.id]) {
+                                    setSelectedBaseSizes((prev) => ({ ...prev, [base.id]: "moyen" }))
+                                  }
+                                }}
+                                className="bg-background/90 backdrop-blur-sm border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              />
+                            </div>
+                            <div className="absolute bottom-3 left-3 right-3">
+                              <h4 className="font-bold text-white text-shadow text-base">{base.nom}</h4>
+                            </div>
+                          </div>
+                          <div className="p-4 bg-card">
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                              {base.variations?.map((v) => (
+                                <div key={v.id} className="text-center p-2 bg-secondary/50 border border-border">
+                                  <div className="text-xs text-muted-foreground capitalize mb-1">{v.taille}</div>
+                                  <div className="text-sm font-bold text-primary">{v.prix.toFixed(0)}f</div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {isSelected && (
+                              <Select
+                                value={currentSize}
+                                onValueChange={(val) => {
+                                  setSelectedBaseSizes((prev) => ({ ...prev, [base.id]: val }))
+                                }}
+                              >
+                                <SelectTrigger className="w-full border-2 font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {base.variations?.map((v) => (
+                                    <SelectItem key={v.id} value={v.taille} className="font-medium">
+                                      {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)} - {v.prix.toFixed(2)}f
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
-                  {/* Variation Selection */}
-                  <div className="flex items-center gap-4 mt-4 p-4 bg-secondary/30 rounded-lg">
-                    <span className="text-sm font-medium">Taille:</span>
-                    <Select value={selectedVariationTaille} onValueChange={setSelectedVariationTaille}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedBase.variations?.map((v) => (
-                          <SelectItem key={v.id} value={v.taille}>
-                            {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)} - {v.prix.toFixed(2)}f
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-primary font-bold ml-auto">{basePrice.toFixed(2)}f</span>
+                  <div className="flex items-center justify-between mt-6 p-5 bg-linear-to-r from-primary/5 to-primary/10 border-l-4 border-primary">
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-muted-foreground block mb-1">Base sélectionnée</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-foreground">{selectedBase.nom}</span>
+                        <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded font-medium">
+                          {(selectedBaseSizes[selectedBaseId] || selectedVariationTaille).charAt(0).toUpperCase() +
+                            (selectedBaseSizes[selectedBaseId] || selectedVariationTaille).slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-primary font-bold text-2xl">{basePrice.toFixed(2)}f</span>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Section 2: Accompaniments */}
-              <Card>
-                <CardHeader>
-                  <p className="text-sm text-primary font-medium">SECTION 2</p>
-                  <CardTitle>Choisir les accompagnements</CardTitle>
-                  <p className="text-sm text-muted-foreground">Ajoute un ou plusieurs accompagnements selon ton goût</p>
+              <Card className="border-2 shadow-lg">
+                <CardHeader className="space-y-2 pb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded bg-primary/10 text-primary text-sm font-bold">
+                      2
+                    </span>
+                    <div>
+                      <CardTitle className="text-2xl">Accompagnements</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ajoute un ou plusieurs accompagnements selon ton goût
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {platsAccompagnement.map((item) => {
                       const isSelected = selectedAccompaniments[item.id]?.selected
                       const selectedTaille = selectedAccompaniments[item.id]?.taille || "moyen"
@@ -254,34 +322,59 @@ export default function PersonnaliserPage() {
                       return (
                         <div
                           key={item.id}
-                          className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${
-                            isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          className={`group overflow-hidden border-2 transition-all duration-200 ${
+                            isSelected
+                              ? "border-primary bg-primary/5 shadow-lg"
+                              : "border-border hover:border-primary/50 hover:shadow-md"
                           }`}
                         >
-                          <Checkbox checked={isSelected} onCheckedChange={() => toggleAccompaniment(item.id)} />
-                          <span className="font-medium flex-1">{item.nom}</span>
+                          <div className="relative h-36">
+                            <Image
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.nom}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+                            <div className="absolute top-3 left-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleAccompaniment(item.id)}
+                                className="bg-background/90 backdrop-blur-sm border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              />
+                            </div>
+                            <div className="absolute bottom-3 left-3 right-3">
+                              <h4 className="font-bold text-white text-shadow text-base">{item.nom}</h4>
+                            </div>
+                          </div>
+                          <div className="p-4 bg-card">
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                              {item.variations?.map((v) => (
+                                <div key={v.id} className="text-center p-2 bg-secondary/50 border border-border">
+                                  <div className="text-xs text-muted-foreground capitalize mb-1">{v.taille}</div>
+                                  <div className="text-sm font-bold text-primary">{v.prix.toFixed(0)}f</div>
+                                </div>
+                              ))}
+                            </div>
 
-                          {isSelected && (
-                            <Select
-                              value={selectedTaille}
-                              onValueChange={(val) => updateAccompanimentTaille(item.id, val)}
-                            >
-                              <SelectTrigger className="w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {item.variations?.map((v) => (
-                                  <SelectItem key={v.id} value={v.taille}>
-                                    {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-
-                          <span className="text-primary text-sm">
-                            +{item.variations?.find((v) => v.taille === selectedTaille)?.prix.toFixed(2)}f
-                          </span>
+                            {isSelected && (
+                              <Select
+                                value={selectedTaille}
+                                onValueChange={(val) => updateAccompanimentTaille(item.id, val)}
+                              >
+                                <SelectTrigger className="w-full border-2 font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {item.variations?.map((v) => (
+                                    <SelectItem key={v.id} value={v.taille} className="font-medium">
+                                      {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)} - {v.prix.toFixed(2)}f
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
@@ -289,15 +382,23 @@ export default function PersonnaliserPage() {
                 </CardContent>
               </Card>
 
-              {/* Section 3: Supplements - Now with 3 sizes */}
-              <Card>
-                <CardHeader>
-                  <p className="text-sm text-primary font-medium">SECTION 3</p>
-                  <CardTitle>Suppléments</CardTitle>
-                  <p className="text-sm text-muted-foreground">Ajoute un extra pour rendre ton plat meilleur</p>
+              {/* Section 3: Supplements */}
+              <Card className="border-2 shadow-lg">
+                <CardHeader className="space-y-2 pb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded bg-primary/10 text-primary text-sm font-bold">
+                      3
+                    </span>
+                    <div>
+                      <CardTitle className="text-2xl">Suppléments</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Ajoute un extra pour rendre ton plat meilleur
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {platsSupplément.map((item) => {
                       const isSelected = selectedSupplements[item.id]?.selected
                       const selectedTaille = selectedSupplements[item.id]?.taille || "moyen"
@@ -305,34 +406,59 @@ export default function PersonnaliserPage() {
                       return (
                         <div
                           key={item.id}
-                          className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${
-                            isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                          className={`group overflow-hidden border-2 transition-all duration-200 ${
+                            isSelected
+                              ? "border-primary bg-primary/5 shadow-lg"
+                              : "border-border hover:border-primary/50 hover:shadow-md"
                           }`}
                         >
-                          <Checkbox checked={isSelected} onCheckedChange={() => toggleSupplement(item.id)} />
-                          <span className="font-medium flex-1">{item.nom}</span>
+                          <div className="relative h-32">
+                            <Image
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.nom}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+                            <div className="absolute top-2 left-2">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleSupplement(item.id)}
+                                className="bg-background/90 backdrop-blur-sm border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              />
+                            </div>
+                            <div className="absolute bottom-2 left-2 right-2">
+                              <h4 className="font-bold text-white text-shadow text-sm">{item.nom}</h4>
+                            </div>
+                          </div>
+                          <div className="p-3 bg-card">
+                            <div className="grid grid-cols-3 gap-1 mb-3">
+                              {item.variations?.map((v) => (
+                                <div key={v.id} className="text-center p-1.5 bg-secondary/50 border border-border">
+                                  <div className="text-[10px] text-muted-foreground capitalize">{v.taille}</div>
+                                  <div className="text-xs font-bold text-primary">{v.prix.toFixed(0)}f</div>
+                                </div>
+                              ))}
+                            </div>
 
-                          {isSelected && (
-                            <Select
-                              value={selectedTaille}
-                              onValueChange={(val) => updateSupplementTaille(item.id, val)}
-                            >
-                              <SelectTrigger className="w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {item.variations?.map((v) => (
-                                  <SelectItem key={v.id} value={v.taille}>
-                                    {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-
-                          <span className="text-primary text-sm">
-                            +{item.variations?.find((v) => v.taille === selectedTaille)?.prix.toFixed(2)}f
-                          </span>
+                            {isSelected && (
+                              <Select
+                                value={selectedTaille}
+                                onValueChange={(val) => updateSupplementTaille(item.id, val)}
+                              >
+                                <SelectTrigger className="w-full text-sm border-2 font-medium">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {item.variations?.map((v) => (
+                                    <SelectItem key={v.id} value={v.taille} className="font-medium">
+                                      {v.taille.charAt(0).toUpperCase() + v.taille.slice(1)} - {v.prix.toFixed(2)}f
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
@@ -343,132 +469,145 @@ export default function PersonnaliserPage() {
 
             {/* Recap Sidebar */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Récapitulatif</CardTitle>
+              <Card className="sticky top-24 border-2 shadow-xl">
+                <CardHeader className="bg-linear-to-br from-primary/10 to-primary/5 border-b-2">
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-primary" />
+                    Récapitulatif
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <Image
-                    src={selectedBase.image || "/placeholder.svg"}
-                    alt={selectedBase.nom}
-                    width={300}
-                    height={200}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
+                <CardContent className="space-y-6 pt-6">
+                  <div className="relative overflow-hidden shadow-md">
+                    <Image
+                      src={selectedBase.image || "/placeholder.svg"}
+                      alt={selectedBase.nom}
+                      width={300}
+                      height={200}
+                      className="w-full h-44 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+                  </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase">BASE</p>
-                      <div className="flex justify-between">
-                        <span>
-                          {selectedBase.nom} ({selectedVariationTaille})
-                        </span>
-                        <span className="text-primary">{basePrice.toFixed(2)}f</span>
+                  <div className="space-y-4">
+                    <div className="pb-3 border-b-2">
+                      <p className="text-xs font-bold text-primary uppercase tracking-wide mb-2">Base</p>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold">{selectedBase.nom}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({selectedBaseSizes[selectedBaseId] || selectedVariationTaille})
+                          </span>
+                        </div>
+                        <span className="text-primary font-bold">{basePrice.toFixed(2)}f</span>
                       </div>
                     </div>
 
                     {Object.entries(selectedAccompaniments).filter(([, v]) => v.selected).length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase">ACCOMPAGNEMENTS</p>
-                        {Object.entries(selectedAccompaniments)
-                          .filter(([, v]) => v.selected)
-                          .map(([id, value]) => {
-                            const plat = platsAccompagnement.find((p) => p.id === id)
-                            const variation = plat?.variations?.find((v) => v.taille === value.taille)
-                            return (
-                              <div key={id} className="flex justify-between">
-                                <span>
-                                  {plat?.nom} ({value.taille})
-                                </span>
-                                <span className="text-primary">{variation?.prix.toFixed(2)}f</span>
-                              </div>
-                            )
-                          })}
+                      <div className="pb-3 border-b">
+                        <p className="text-xs font-bold text-primary uppercase tracking-wide mb-2">Accompagnements</p>
+                        <div className="space-y-2">
+                          {Object.entries(selectedAccompaniments)
+                            .filter(([, v]) => v.selected)
+                            .map(([id, value]) => {
+                              const plat = platsAccompagnement.find((p) => p.id === id)
+                              const variation = plat?.variations?.find((v) => v.taille === value.taille)
+                              return (
+                                <div key={id} className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">
+                                    {plat?.nom} ({value.taille})
+                                  </span>
+                                  <span className="font-semibold">{variation?.prix.toFixed(2)}f</span>
+                                </div>
+                              )
+                            })}
+                        </div>
                       </div>
                     )}
 
                     {Object.entries(selectedSupplements).filter(([, v]) => v.selected).length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase">SUPPLÉMENTS</p>
-                        {Object.entries(selectedSupplements)
-                          .filter(([, v]) => v.selected)
-                          .map(([id, value]) => {
-                            const plat = platsSupplément.find((p) => p.id === id)
-                            const variation = plat?.variations?.find((v) => v.taille === value.taille)
-                            return (
-                              <div key={id} className="flex justify-between">
-                                <span>
-                                  {plat?.nom} ({value.taille})
-                                </span>
-                                <span className="text-primary">{variation?.prix.toFixed(2)}f</span>
-                              </div>
-                            )
-                          })}
+                      <div className="pb-3 border-b">
+                        <p className="text-xs font-bold text-primary uppercase tracking-wide mb-2">Suppléments</p>
+                        <div className="space-y-2">
+                          {Object.entries(selectedSupplements)
+                            .filter(([, v]) => v.selected)
+                            .map(([id, value]) => {
+                              const plat = platsSupplément.find((p) => p.id === id)
+                              const variation = plat?.variations?.find((v) => v.taille === value.taille)
+                              return (
+                                <div key={id} className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">
+                                    {plat?.nom} ({value.taille})
+                                  </span>
+                                  <span className="font-semibold">{variation?.prix.toFixed(2)}f</span>
+                                </div>
+                              )
+                            })}
+                        </div>
                       </div>
                     )}
-                  </div>
 
-                  <div className="border-t pt-3 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Sous-total</span>
-                      <span>{subtotal.toFixed(2)}f</span>
+                    <div className="space-y-2 pt-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Sous-total</span>
+                        <span className="font-semibold">{subtotal.toFixed(2)}f</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">TVA (16%)</span>
+                        <span className="font-semibold">{tva.toFixed(2)}f</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-3 border-t-2 border-primary/20">
+                        <span className="font-bold text-lg">Total</span>
+                        <span className="text-primary font-bold text-2xl">{total.toFixed(2)}f</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>TVA (16%)</span>
-                      <span>{tva.toFixed(2)}f</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-xl pt-2 border-t">
-                      <span>Total</span>
-                      <span className="text-primary">{total.toFixed(2)}f</span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-center gap-4 py-3">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="text-xl font-bold w-8 text-center">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {isAuthenticated ? (
-                    <Button
-                      onClick={handleAddToCart}
-                      disabled={added}
-                      className={`w-full py-6 text-lg rounded-full transition-all ${
-                        added ? "bg-green-500 hover:bg-green-500" : "bg-primary hover:bg-primary/90"
-                      } text-primary-foreground`}
-                    >
-                      {added ? (
-                        <>
-                          <Check className="w-5 h-5 mr-2" />
-                          Ajouté au panier
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="w-5 h-5 mr-2" />
-                          Ajouter au panier
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-center text-muted-foreground">Connectez-vous pour ajouter au panier</p>
-                      <Link href="/connexion">
-                        <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg rounded-full">
-                          Se connecter
+                    <div className="flex items-center justify-between p-4 bg-secondary/50 border border-border">
+                      <span className="font-medium">Quantité</span>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                          className="h-9 w-9 border-2"
+                        >
+                          <Minus className="h-4 w-4" />
                         </Button>
-                      </Link>
+                        <span className="text-xl font-bold min-w-8 text-center">{quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(quantity + 1)}
+                          className="h-9 w-9 border-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  )}
+
+                    {isAuthenticated ? (
+                      <Button
+                        onClick={handleAddToCart}
+                        className="w-full h-12 text-base font-bold shadow-lg hover:shadow-xl transition-all duration-200"
+                        disabled={added}
+                      >
+                        {added ? (
+                          <>
+                            <Check className="mr-2 h-5 w-5" />
+                            Ajouté au panier
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="mr-2 h-5 w-5" />
+                            Ajouter au panier
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button asChild className="w-full h-12 text-base font-bold shadow-lg">
+                        <Link href="/connexion">Connexion requise</Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>

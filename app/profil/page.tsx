@@ -91,7 +91,7 @@ export default function ProfilPage() {
                       Modifier
                     </Button>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -111,7 +111,7 @@ export default function ProfilPage() {
                         {saving ? "Enregistrement..." : "Enregistrer"}
                       </Button>
                     </div>
-                  )}
+                  )} 
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {message && (
@@ -133,6 +133,7 @@ export default function ProfilPage() {
                           id="nom_complet"
                           value={formData.nom_complet}
                           onChange={(e) => setFormData({ ...formData, nom_complet: e.target.value })}
+                          className="w-full"
                         />
                       ) : (
                         <p className="text-lg font-medium">{client.nom_complet}</p>
@@ -149,6 +150,7 @@ export default function ProfilPage() {
                           id="telephone"
                           value={formData.telephone}
                           onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                          className="w-full"
                         />
                       ) : (
                         <p className="text-lg font-medium">{client.telephone}</p>
@@ -167,6 +169,7 @@ export default function ProfilPage() {
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="votre@email.com"
+                          className="w-full"
                         />
                       ) : (
                         <p className="text-lg font-medium">{client.email || "Non renseigné"}</p>

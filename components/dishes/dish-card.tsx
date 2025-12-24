@@ -26,33 +26,34 @@ export function DishCard({ dish, onAddToCart, showDescription = true, showStockB
   }
 
   return (
-    <Card className="overflow-hidden bg-card hover:shadow-lg transition-shadow">
-      <div className="relative">
-        <Image
-          src={dish.image || "/placeholder.svg"}
-          alt={dish.nom}
-          width={350}
-          height={250}
-          className="w-full h-52 object-cover"
-        />
-        {showStockBadge && dish.statut_stock === "stock_bas" && (
-          <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">Stock limité</div>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold text-lg">{dish.nom}</h3>
-          <span className="text-primary font-bold text-lg">{dish.prix_base.toFixed(2)}f</span>
+    <Card className="group overflow-hidden bg-neutral-50 border border-gray-200 rounded-full aspect-square transition-shadow hover:shadow-lg">
+      {/* Image area: centered circular image with gentle zoom on hover */}
+      <div className="w-full flex items-center justify-center p-6">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden relative transform transition-transform duration-300 group-hover:scale-105">
+          <Image
+            src={dish.image || "/placeholder.svg"}
+            alt={dish.nom}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 80px, (max-width: 1024px) 112px, 128px"
+          />
         </div>
+      </div>
+
+      <CardContent className="p-4 text-center flex flex-col items-center gap-2">
+        <h3 className="font-semibold text-lg">{dish.nom}</h3>
+        <span className="text-primary font-bold text-lg">{dish.prix_base.toFixed(2)}f</span>
+
         {showDescription && dish.description && (
-          <p className="text-muted-foreground text-sm mb-4">{dish.description}</p>
+          <p className="text-muted-foreground text-sm max-w-48">{dish.description}</p>
         )}
+
         {onAddToCart && (
           <Button
-            className={`w-full rounded-full transition-all ${
+            className={`mt-3 rounded-full px-5 py-2 transform transition duration-150 ${
               added
-                ? "bg-green-500 hover:bg-green-500 text-white"
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "bg-green-500 hover:bg-green-500 text-white shadow-sm"
+                : "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 shadow-sm hover:shadow-md"
             }`}
             onClick={handleClick}
             disabled={added}
@@ -60,7 +61,7 @@ export function DishCard({ dish, onAddToCart, showDescription = true, showStockB
             {added ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Ajouté au panier
+                Ajouté
               </>
             ) : (
               <>

@@ -1,67 +1,27 @@
-"use client";
+"use client"
 
-import { PageLayout } from "@/components/layout/page-layout";
-import { WhyPersonalizationSection } from "@/components/home/why-personalization-section";
-import { StepsSection } from "@/components/home/steps-section";
-import { PopularDishesSection } from "@/components/home/popular-dishes-section";
-import { Button } from "@/components/ui/button";
-import {
-  Heart,
-  Wallet,
-  Salad,
-  CheckCircle,
-  UserPlus,
-  UtensilsCrossed,
-  ListChecks,
-  CreditCard,
-  Loader2,
-} from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { useDishes } from "@/contexts/dishes-context";
-import { useCart } from "@/contexts/cart-context";
-
-const benefits = [
-  {
-    icon: Heart,
-    title: "Goûts personnels",
-    description:
-      "Chaque bouchée à vos goûts et envies. Créez votre plat comme vous l'aimez vraiment.",
-  },
-  {
-    icon: Wallet,
-    title: "Budget flexible",
-    description:
-      "Vous choisissez vos quantités selon votre budget. Dépensez ce que vous voulez.",
-  },
-  {
-    icon: Salad,
-    title: "Contrôle santé",
-    description:
-      "Un rééquilibrage est crucial le soir. Mangez sainement en personnalisant vos plats.",
-  },
-  {
-    icon: CheckCircle,
-    title: "Liberté de choix",
-    description:
-      "Mangez ce que vous aimez vraiment chaque jour en changeant de plat.",
-  },
-];
+import { PageLayout } from "@/components/layout/page-layout"
+import { WhyPersonalizationSection } from "@/components/home/why-personalization-section"
+import { StepsSection } from "@/components/home/steps-section"
+import { PopularDishesSection } from "@/components/home/popular-dishes-section"
+import { Button } from "@/components/ui/button"
+import { UserPlus, UtensilsCrossed, ListChecks, CreditCard, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { useDishes } from "@/contexts/dishes-context"
+import { useCart } from "@/contexts/cart-context"
 
 const steps = [
   {
     number: "1",
     icon: UserPlus,
     title: "Créer un compte",
-    description:
-      "Inscrivez-vous pour profiter de nos avantages et commandez en quelques secondes.",
+    description: "Inscrivez-vous pour profiter de nos avantages et commandez en quelques secondes.",
   },
   {
     number: "2",
     icon: UtensilsCrossed,
     title: "Choisir un plat",
-    description:
-      "Sélectionnez votre plat de base ou personnalisez complètement votre repas.",
+    description: "Sélectionnez votre plat de base ou personnalisez complètement votre repas.",
   },
   {
     number: "3",
@@ -73,62 +33,59 @@ const steps = [
     number: "4",
     icon: CreditCard,
     title: "Payer et suivre",
-    description:
-      "Payez en ligne et suivez votre commande en temps réel jusqu'à la livraison.",
+    description: "Payez en ligne et suivez votre commande en temps réel jusqu'à la livraison.",
   },
-];
+]
 
 export default function HomePage() {
-  const { popularDishes, isLoading } = useDishes();
-  const { addSimpleItem } = useCart();
+  const { popularDishes, isLoading } = useDishes()
+  const { addSimpleItem } = useCart()
 
   const handleAddToCart = (dish: any) => {
-    addSimpleItem(dish);
-  };
+    addSimpleItem(dish)
+  }
 
   return (
-    <PageLayout>
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight mb-6">
-              Compose ton repas
-              <br />
-              <span className="text-primary">comme tu l&apos;aimes</span>
-            </h1>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Un service simple, rapide et sur mesure pour créer le repas
-              parfait. Choisissez les ingrédients, les quantités et ton budget.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/personnaliser">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3">
-                  Personnaliser mon plat
-                </Button>
-              </Link>
-              <Link href="/menu">
-                <Button
-                  variant="outline"
-                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-6 py-3 bg-transparent"
-                >
-                  Explorer le menu
-                </Button>
-              </Link>
+    <PageLayout
+      heroSection={
+        <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+            <div className="space-y-10">
+              <div className="inline-block">
+                <span className="inline-flex items-center gap-2 bg-white/90 text-primary px-5 py-2.5 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  Nouveau concept de restauration
+                </span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight text-balance drop-shadow-2xl">
+                Compose ton repas
+                <br />
+                <span className="text-primary drop-shadow-2xl">comme tu l&apos;aimes</span>
+              </h1>
+              <p className="text-white text-xl md:text-2xl leading-relaxed max-w-xl drop-shadow-lg">
+                Un service simple, rapide et sur mesure pour créer le repas parfait. Choisissez les ingrédients, les
+                quantités et ton budget.
+              </p>
+              <div className="flex flex-wrap gap-5 pt-4">
+                <Link href="/personnaliser">
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 sm:px-10 sm:py-5 text-base sm:text-lg font-semibold shadow-lg hover:shadow-2xl transition-all hover:scale-105 rounded-2xl">
+                    Personnaliser mon plat
+                  </Button>
+                </Link>
+                <Link href="/menu">
+                  <Button
+                    variant="outline"
+                    className="border-2 border-white text-white hover:bg-white hover:text-primary px-6 py-3 sm:px-10 sm:py-5 text-base sm:text-lg font-semibold transition-all hover:scale-105 bg-white/10 backdrop-blur-sm rounded-2xl"
+                  >
+                    Explorer le menu
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-          <div className="relative">
-            <Image
-              src="/delicious-food-bowls-overhead.jpg"
-              alt="Plats délicieux"
-              width={500}
-              height={400}
-              className="rounded-2xl shadow-lg"
-            />
-          </div>
         </div>
-      </section>
-
+      }
+    >
       <WhyPersonalizationSection />
 
       <StepsSection
@@ -152,5 +109,5 @@ export default function HomePage() {
         />
       )}
     </PageLayout>
-  );
+  )
 }

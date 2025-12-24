@@ -1,15 +1,10 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
-import { authApi, commandesApi, type CommandeResponse } from "@/lib/api"
+import { authApi, commandesApi, type CommandeResponse, type LoginResponse } from "@/lib/api"
+import type { Client as ApiClient } from "@/lib/types"
 
-interface Client {
-  id: string
-  nom_complet: string
-  telephone: string
-  email?: string
-  date_inscription: Date
-}
+type PublicClient = Omit<ApiClient, "mot_de_passe" | "date_inscription"> & { date_inscription: Date }
 
 interface Commande {
   id: string
@@ -26,15 +21,18 @@ interface Commande {
 
 interface AuthContextType {
   isAuthenticated: boolean
-  client: Client | null
+  client: PublicClient | null
+  role?: string
+  permissions?: string[]
   isLoading: boolean
-  login: (telephone: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
-  updateProfile: (data: Partial<Client>) => Promise<{ success: boolean; error?: string }>
+  updateProfile: (data: Partial<PublicClient>) => Promise<{ success: boolean; error?: string }>
   commandes: Commande[]
   commandeEnCours: Commande | null
   refreshCommandes: () => Promise<void>
+  hasPermission: (permission: string) => boolean
 }
 
 interface RegisterData {
@@ -48,7 +46,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [client, setClient] = useState<Client | null>(null)
+  const [client, setClient] = useState<PublicClient | null>(null)
+  const [role, setRole] = useState<string | undefined>(undefined)
+  const [permissions, setPermissions] = useState<string[] | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [commandes, setCommandes] = useState<Commande[]>([])
 
@@ -81,10 +81,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (token) {
         const response = await authApi.getProfile()
         if (response.success && response.data) {
+          const profile = response.data
           setClient({
-            ...response.data,
-            date_inscription: new Date(response.data.date_inscription),
+            ...profile,
+            date_inscription: new Date(profile.date_inscription),
           })
+          setRole((profile as any).role)
+          setPermissions((profile as any).permissions)
           setIsAuthenticated(true)
           // Charger les commandes
           const commandesResponse = await commandesApi.getMine()
@@ -100,11 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth()
   }, [])
 
-  const login = useCallback(async (telephone: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     setIsLoading(true)
 
+    // Détecter si l'identifiant est un email
+    const isEmail = identifier.includes("@")
+
     const response = await authApi.login({
-      telephone,
+      ...(isEmail ? { email: identifier } : { telephone: identifier }),
       mot_de_passe: password,
     })
 
@@ -122,6 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...apiClient,
       date_inscription: new Date(apiClient.date_inscription),
     })
+    // RBAC
+    if ((apiClient as any).role) setRole((apiClient as any).role)
+    if ((apiClient as any).permissions) setPermissions((apiClient as any).permissions)
+
     setIsAuthenticated(true)
 
     // Charger les commandes
@@ -168,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.logout()
 
     setClient(null)
+    setRole(undefined)
+    setPermissions(undefined)
     setIsAuthenticated(false)
     setCommandes([])
     localStorage.removeItem("cube_token")
@@ -175,12 +187,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateProfile = useCallback(
-    async (data: Partial<Client>) => {
+    async (data: Partial<PublicClient>) => {
       if (!client) {
         return { success: false, error: "Non connecté" }
       }
 
-      const response = await authApi.updateProfile(data)
+      const { date_inscription, ...rest } = data
+      const payload: Partial<LoginResponse["client"]> = {
+        ...rest,
+        ...(date_inscription instanceof Date
+          ? { date_inscription: date_inscription.toISOString() }
+          : {}),
+      }
+
+      const response = await authApi.updateProfile(payload)
 
       if (!response.success) {
         return { success: false, error: response.error || "Erreur de mise à jour" }
@@ -195,11 +215,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const commandeEnCours =
     commandes.find((c) => c.statut_commande !== "livree" && c.statut_commande !== "annulee") || null
 
+  const hasPermission = (permission: string) => {
+    if (!permissions) return false
+    if (permissions.includes("*")) return true
+    if (role === "superadmin") return true
+    return permissions.includes(permission)
+  }
+
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated,
         client,
+        role,
+        permissions,
         isLoading,
         login,
         register,
@@ -208,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         commandes,
         commandeEnCours,
         refreshCommandes,
+        hasPermission,
       }}
     >
       {children}

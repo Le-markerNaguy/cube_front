@@ -190,6 +190,8 @@ export function DishesProvider({ children }: { children: ReactNode }) {
         categorie: updates.categorie,
         image: updates.image,
         statut: updates.statut,
+        // Include variations when present (taille/prix)
+        variations: updates.variations?.map((v) => ({ taille: v.taille, prix: v.prix })),
       })
 
       if (!response.success) {

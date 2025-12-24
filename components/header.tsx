@@ -16,7 +16,7 @@ import {
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { isAuthenticated, client, logout } = useAuth()
+  const { isAuthenticated, client, logout, role, hasPermission } = useAuth()
   const { itemCount } = useCart()
 
   return (
@@ -43,6 +43,11 @@ export function Header() {
            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
             Contact
           </Link>
+          {(role === "superadmin" || hasPermission("admin.dashboard.view")) && (
+            <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+              Admin
+            </Link>
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
@@ -81,15 +86,21 @@ export function Header() {
               </DropdownMenu>
             </>
           ) : (
-            <Link href="/connexion">
-              <Button
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
-              >
-                Connexion
-              </Button>
-            </Link>
-            
+            <div className="flex items-center gap-2">
+              <Link href="/connexion">
+                <Button
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
+                >
+                  Connexion
+                </Button>
+              </Link>
+              <Link href="/inscription">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Inscription
+                </Button>
+              </Link>
+            </div>
           )}
 
           {/* Cart - visible seulement si connecté */}
@@ -194,9 +205,14 @@ export function Header() {
                 </button>
               </>
             ) : (
-              <Link href="/connexion" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full bg-primary text-primary-foreground">Connexion</Button>
-              </Link>
+              <>
+                <Link href="/inscription" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full bg-primary text-primary-foreground">Inscription</Button>
+                </Link>
+                <Link href="/connexion" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full mt-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent">Connexion</Button>
+                </Link>
+              </>
             )}
           </nav>
         </div>

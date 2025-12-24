@@ -55,9 +55,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     const data = await response.json()
 
     if (!response.ok) {
+      const err = data.error || data.message || `Erreur ${response.status}`
+      if (response.status === 403) {
+        return { success: false, error: "Accès refusé (403)" }
+      }
       return {
         success: false,
-        error: data.error || data.message || `Erreur ${response.status}`,
+        error: err,
       }
     }
 
@@ -80,7 +84,8 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 // ==========================================
 
 export interface LoginRequest {
-  telephone: string
+  telephone?: string
+  email?: string
   mot_de_passe: string
 }
 
@@ -92,6 +97,9 @@ export interface LoginResponse {
     telephone: string
     email?: string
     date_inscription: string
+    // RBAC (optional) - present for admin accounts
+    role?: string
+    permissions?: string[]
   }
 }
 
@@ -168,7 +176,6 @@ export interface PlatRequest {
   categorie: string
   image?: string
   statut?: "actif" | "inactif"
-  statut_stock?: "en_stock" | "stock_bas" | "rupture"
   variations?: {
     taille: "petit" | "moyen" | "grand"
     prix: number
@@ -184,7 +191,6 @@ export interface PlatResponse {
   categorie: string
   image?: string
   statut: "actif" | "inactif"
-  statut_stock: "en_stock" | "stock_bas" | "rupture"
   variations?: {
     id: string
     id_plat: string
@@ -199,7 +205,6 @@ export interface PlatsFilters {
   type?: string
   categorie?: string
   statut?: string
-  statut_stock?: string
   search?: string
   page?: number
   limit?: number
@@ -326,6 +331,8 @@ export interface CommandeRequest {
   commune: string
   instructions?: string
   mode_paiement: "airtel_money" | "mobile_cash" | "livraison"
+  // Montant en espèces annoncé par le client lorsque le mode est "livraison"
+  montant_en_especes?: number
   items: CommandeItemRequest[]
 }
 
@@ -546,25 +553,27 @@ export const adminsApi = {
   },
 
   // Créer un administrateur
-  create: async (data: AdminRequest): Promise<ApiResponse<AdminResponse>> => {
+  create: async (data: AdminRequest & { role_id?: string }): Promise<ApiResponse<AdminResponse>> => {
     return apiRequest<AdminResponse>("/admins", {
       method: "POST",
       body: JSON.stringify({
         name: data.nom,
         email: data.email,
         password: data.mot_de_passe,
+        ...(data.role_id ? { role_id: data.role_id } : {}),
       }),
     })
   },
 
   // Mettre à jour un administrateur
-  update: async (id: string, data: Partial<AdminRequest>): Promise<ApiResponse<AdminResponse>> => {
+  update: async (id: string, data: Partial<AdminRequest & { role_id?: string }>): Promise<ApiResponse<AdminResponse>> => {
     return apiRequest<AdminResponse>(`/admins/${id}`, {
       method: "PATCH",
       body: JSON.stringify({
         ...(data.nom ? { name: data.nom } : {}),
         ...(data.email ? { email: data.email } : {}),
         ...(data.mot_de_passe ? { password: data.mot_de_passe } : {}),
+        ...(data.role_id ? { role_id: data.role_id } : {}),
       }),
     })
   },
@@ -573,6 +582,57 @@ export const adminsApi = {
   delete: async (id: string): Promise<ApiResponse<null>> => {
     return apiRequest<null>(`/admins/${id}`, {
       method: "DELETE",
+    })
+  },
+}
+
+// ==========================================
+// API ROLES & PERMISSIONS (Super Admin)
+// ==========================================
+
+export interface RoleResponse {
+  id: string
+  name: string
+  permissions: string[]
+}
+
+export interface PermissionResponse {
+  key: string
+  description?: string
+}
+
+export const permissionsApi = {
+  getAll: async (): Promise<ApiResponse<PermissionResponse[]>> => {
+    return apiRequest<PermissionResponse[]>("/permissions")
+  },
+}
+
+export const rolesApi = {
+  getAll: async (): Promise<ApiResponse<RoleResponse[]>> => {
+    return apiRequest<RoleResponse[]>("/roles")
+  },
+  getById: async (id: string): Promise<ApiResponse<RoleResponse>> => {
+    return apiRequest<RoleResponse>(`/roles/${id}`)
+  },
+  create: async (data: { name: string; permissions?: string[] }): Promise<ApiResponse<RoleResponse>> => {
+    return apiRequest<RoleResponse>("/roles", {
+      method: "POST",
+      body: JSON.stringify({ name: data.name, permissions: data.permissions || [] }),
+    })
+  },
+  update: async (id: string, data: { name?: string; permissions?: string[] }): Promise<ApiResponse<RoleResponse>> => {
+    return apiRequest<RoleResponse>(`/roles/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ ...(data.name ? { name: data.name } : {}), ...(data.permissions ? { permissions: data.permissions } : {}) }),
+    })
+  },
+  delete: async (id: string): Promise<ApiResponse<null>> => {
+    return apiRequest<null>(`/roles/${id}`, { method: "DELETE" })
+  },
+  updatePermissions: async (id: string, permissions: string[]): Promise<ApiResponse<RoleResponse>> => {
+    return apiRequest<RoleResponse>(`/roles/${id}/permissions`, {
+      method: "PUT",
+      body: JSON.stringify({ permissions }),
     })
   },
 }

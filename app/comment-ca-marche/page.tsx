@@ -10,7 +10,7 @@ export default function CommentCaMarchePage() {
       <Header />
 
       {/* Hero */}
-      <section className="py-16 text-center bg-orange-50">
+      <section className="py-16 text-center bg-zinc-100">
         <h1 className="text-3xl md:text-4xl font-bold mb-4">
           Comment fonctionne la personnalisation chez Cube ?
         </h1>
@@ -46,20 +46,20 @@ export default function CommentCaMarchePage() {
             alt="Base du plat"
             width={500}
             height={400}
-            className="rounded-2xl shadow-lg"
+            className="rounded-sm shadow-lg"
           />
         </div>
       </section>
 
       {/* Step 2 */}
-      <section className="py-14 px-4 bg-orange-50/60">
+      <section className="py-14 px-4 bg-zinc-100">
         <div className="container mx-auto max-w-5xl grid md:grid-cols-2 gap-10 items-center">
           <Image
             src="/Attieke.webp"
             alt="Accompagnements"
             width={500}
             height={400}
-            className="rounded-2xl shadow-lg"
+            className="rounded-sm shadow-lg"
           />
 
           <div className="space-y-4">
@@ -108,13 +108,13 @@ export default function CommentCaMarchePage() {
             alt="Suppléments"
             width={500}
             height={400}
-            className="rounded-2xl shadow-lg"
+            className="rounded-sm shadow-lg"
           />
         </div>
       </section>
 
       {/* Pricing Explanation */}
-      <section className="py-16 px-4 bg-orange-50">
+      <section className="py-16 px-4 bg-zinc-100">
         <div className="container mx-auto max-w-3xl text-center space-y-6">
           <h2 className="text-2xl font-bold text-orange-500">Un prix clair et flexible</h2>
           <p className="text-gray-600">
@@ -122,9 +122,9 @@ export default function CommentCaMarchePage() {
             ajoutez d’éléments ou augmentez les portions, plus le prix s’ajuste.
           </p>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-left space-y-3">
+          <div className="bg-white rounded-sm shadow-lg p-6 text-left space-y-3">
             <p className="font-semibold">Exemple de calcul :</p>
-            <ul className="text-sm text-gray-600 space-y-1">
+            <ul className="text-sm text-gray-600 space-y-1 list-disc pl-5">
               <li>Base : Poulet braisé (portion moyenne) — 3 500 FCFA</li>
               <li>Accompagnement : Attiéké (portion moyenne) — +600 FCFA</li>
               <li>Supplément : Légumes premium (standard) — +1 000 FCFA</li>

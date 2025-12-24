@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/layout/page-header"
 import { OrderTimeline } from "@/components/order/order-timeline"
 import { OrderItemDisplay } from "@/components/order/order-item-display"
 import { Button } from "@/components/ui/button"
-import { MapPin, Phone, Clock, HelpCircle, Loader2 } from "lucide-react"
+import { MapPin, Phone, Clock, HelpCircle, Loader2, Banknote } from "lucide-react"
 import Link from "next/link"
 import { commandesApi, type CommandeResponse } from "@/lib/api"
 import { STATUTS_COMMANDE } from "@/lib/constants"
@@ -188,6 +188,29 @@ export default function SuiviPage() {
                     <p className="font-medium text-foreground">30-40 minutes</p>
                   </div>
                 </div>
+
+                {/* Montant en espèces (si communiqué) */}
+                {(() => {
+                  // Priorité: valeur renvoyée par l'API si présente, sinon tentative d'analyse dans les instructions
+                  const announced = (commande.paiement && (commande.paiement as any).montant_en_especes) as number | undefined
+                  const instrMatch = commande.instructions ? commande.instructions.match(/Montant en espèces annoncé:\s*([0-9.,]+)/) : null
+                  const announcedFromInstr = instrMatch ? Number(instrMatch[1].replace(/,/g, '.')) : undefined
+                  const montant = announced ?? announcedFromInstr
+                  if (!montant) return null
+
+                  return (
+                    <div className="flex items-start gap-3 mt-3">
+                      <Banknote className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Montant en espèces annoncé</p>
+                        <p className="font-medium text-foreground">{montant.toFixed(2)}f</p>
+                        <p className="text-sm text-muted-foreground">
+                          Monnaie à préparer: {(montant - commande.total).toFixed(2)}f
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
 

@@ -10,12 +10,27 @@ export interface Client {
   email?: string
   mot_de_passe: string
   date_inscription: Date
+  // RBAC (optionnel) - disponible pour les comptes administrateurs
+  role?: string
+  permissions?: string[]
+}
+
+// Roles & Permissions (RBAC)
+export interface Role {
+  id: string
+  name: string
+  permissions: string[]
+}
+
+export interface Permission {
+  key: string
+  description?: string
 }
 
 // PLAT
 export type TypePlat = "menu" | "base" | "accompagnement" | "supplement"
 export type StatutPlat = "actif" | "inactif"
-export type StatutStock = "en_stock" | "stock_bas" | "rupture"
+
 
 export interface Plat {
   id: string
@@ -142,6 +157,8 @@ export interface Paiement {
   id_commande: string
   mode: ModePaiement
   montant: number
+  // Montant en espèces annoncé par le client (pour paiement à la livraison)
+  montant_en_especes?: number
   statut: StatutPaiement
   date_paiement?: Date
   reference?: string

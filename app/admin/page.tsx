@@ -76,14 +76,25 @@ export default function AdminDashboard() {
           setPopularDishes(top)
 
           // Recent orders (map API CommandeResponse -> UI shape)
-          const recents = (d.commandes_recentes || []).map((c: any) => ({
-            id: c.id,
-            createdAt: c.date_commande,
-            total: c.total,
-            items: (c.lignes || []).map((l: any) => ({ quantity: l.quantite, name: l.nom_plat })),
-            deliveryInfo: { fullName: c.client?.nom_complet ?? "Client" },
-            status: c.statut_commande,
-          }))
+          const recents = (d.commandes_recentes || []).map((c: any) => {
+            // Extraire le montant en espèces annoncé par le client (priorité paiement -> instructions)
+            let cashAmount = c.paiement?.montant_en_especes
+            if (!cashAmount && c.instructions) {
+              const m = c.instructions.match(/Montant en espèces annoncé:\s*([0-9.,]+)/)
+              if (m) cashAmount = Number(m[1].replace(/,/g, "."))
+            }
+
+            return {
+              id: c.id,
+              createdAt: c.date_commande,
+              total: c.total,
+              items: (c.lignes || []).map((l: any) => ({ quantity: l.quantite, name: l.nom_plat })),
+              deliveryInfo: { fullName: c.client?.nom_complet ?? "Client" },
+              status: c.statut_commande,
+              paymentMode: c.paiement?.mode,
+              cashAmount: cashAmount,
+            }
+          })
           setRecentOrders(recents)
         }
       } catch (e) {
@@ -181,8 +192,7 @@ export default function AdminDashboard() {
               {revenueData.map((item, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                   className="w-full bg-slate-800 rounded-t-md transition-all hover:bg-slate-900"
-
+                    className="w-full bg-sky-950 rounded-t-md transition-all hover:bg-sky-900"
                     style={{ height: `${item.value}%` }}
                   />
                   <span className="text-xs text-gray-500">{item.day}</span>
@@ -268,6 +278,7 @@ export default function AdminDashboard() {
                   <th className="pb-3 font-medium hidden sm:table-cell">Client</th>
                   <th className="pb-3 font-medium hidden md:table-cell">Articles</th>
                   <th className="pb-3 font-medium">Total</th>
+                  <th className="pb-3 font-medium hidden md:table-cell">Espèces</th>
                   <th className="pb-3 font-medium">État</th>
                   <th className="pb-3 font-medium">Action</th>
                 </tr>
@@ -285,6 +296,9 @@ export default function AdminDashboard() {
                       ...
                     </td>
                     <td className="py-4 font-medium text-gray-900">{Number(order.total || 0).toFixed(2)} f</td>
+                    <td className="py-4 text-gray-900 hidden md:table-cell">
+                      {order.paymentMode === "livraison" && order.cashAmount ? `${Number(order.cashAmount).toFixed(2)} f` : "-"}
+                    </td>
                     <td className="py-4">
                       <span
                         className={`px-2 lg:px-3 py-1 rounded-full text-xs lg:text-sm ${getStatusStyle(order.status)}`}

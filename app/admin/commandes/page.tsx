@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 import { Search, ChevronLeft, ChevronRight, Eye, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -116,12 +118,34 @@ export default function AdminCommandes() {
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage)
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
 
+  const { role, hasPermission } = useAuth()
+  const { toast } = useToast()
+
+  const requiredPermissionForTransition = (current: OrderStatus, target: OrderStatus): string | null => {
+    if (current === OrderStatus.PREPARING && target === OrderStatus.DELIVERING) return "orders.preparation.update"
+    if (target === OrderStatus.DELIVERED) return "orders.livree.confirm"
+    return null
+  }
+
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+    const order = orders.find((o) => o.id === orderId)
+    if (!order) return
+
+    const perm = requiredPermissionForTransition(order.statut_commande as OrderStatus, newStatus)
+    if (perm && !hasPermission(perm)) {
+      toast({ title: "Accès refusé", description: "Vous n'avez pas la permission d'effectuer cette action" })
+      return
+    }
+
     try {
-      await commandesApi.updateStatus(orderId, newStatus as any)
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, statut_commande: newStatus as any } : o)))
-      if (selectedOrder?.id === orderId) {
-        setSelectedOrder((prev) => (prev ? { ...prev, statut_commande: newStatus as any } : null))
+      const res = await commandesApi.updateStatus(orderId, newStatus as any)
+      if (res.success && res.data) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, statut_commande: newStatus as any } : o)))
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder((prev) => (prev ? { ...prev, statut_commande: newStatus as any } : null))
+        }
+      } else if (res.error) {
+        toast({ title: "Erreur", description: res.error })
       }
     } catch (e) {
       console.error("Failed to update order status:", e)
@@ -215,6 +239,7 @@ export default function AdminCommandes() {
                   <th className="p-4 font-medium">Client</th>
                   <th className="p-4 font-medium hidden md:table-cell">Articles</th>
                   <th className="p-4 font-medium">Total</th>
+                  <th className="p-4 font-medium hidden md:table-cell">Espèces</th>
                   <th className="p-4 font-medium hidden sm:table-cell">Heure</th>
                   <th className="p-4 font-medium">État</th>
                   <th className="p-4 font-medium">Actions</th>
@@ -236,6 +261,18 @@ export default function AdminCommandes() {
                       {order.lignes.length > 2 && "..."}
                     </td>
                     <td className="p-4 font-semibold text-gray-900">{Number(order.total).toFixed(2)} f</td>
+                    <td className="p-4 text-gray-900 hidden md:table-cell">
+                      {(() => {
+                        // Priorité: paiement.montant_en_especes -> instructions fallback
+                        const p: any = order.paiement || {}
+                        let cash = p.montant_en_especes
+                        if (!cash && order.instructions) {
+                          const m = order.instructions.match(/Montant en espèces annoncé:\s*([0-9.,]+)/)
+                          if (m) cash = Number(m[1].replace(/,/g, '.'))
+                        }
+                        return cash ? `${Number(cash).toFixed(2)} f` : "-"
+                      })()}
+                    </td>
                     <td className="p-4 hidden sm:table-cell">
                       <p className="text-gray-900">{formatTimeAgo(new Date(order.date_commande))}</p>
                       <p className="text-gray-500 text-sm">
@@ -256,6 +293,20 @@ export default function AdminCommandes() {
                           </option>
                         ))}
                       </select>
+
+                      <div className="mt-2 space-y-2">
+                        {order.statut_commande === OrderStatus.PREPARING && hasPermission("orders.preparation.update") && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, OrderStatus.DELIVERING)}>
+                            Passer en livraison
+                          </Button>
+                        )}
+
+                        {order.statut_commande === OrderStatus.DELIVERING && hasPermission("orders.livree.confirm") && (
+                          <Button size="sm" onClick={() => updateOrderStatus(order.id, OrderStatus.DELIVERED)}>
+                            Marquer comme livrée
+                          </Button>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4">
                       <Button
@@ -390,6 +441,40 @@ export default function AdminCommandes() {
                   <span>Total</span>
                   <span className="text-orange-500">{selectedOrder.total.toFixed(2)} f</span>
                 </div>
+
+                {/* Payment details */}
+                {selectedOrder.paiement && (
+                  <div className="mt-4">
+                    <h3 className="font-semibold mb-2">Paiement</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-1">
+                      <p>
+                        <span className="text-gray-500">Mode:</span> {selectedOrder.paiement.mode}
+                      </p>
+                      <p>
+                        <span className="text-gray-500">Montant enregistré:</span> {Number(selectedOrder.paiement.montant).toFixed(2)} f
+                      </p>
+                      {(() => {
+                        const p: any = selectedOrder.paiement || {}
+                        let cash = p.montant_en_especes
+                        if (!cash && selectedOrder.instructions) {
+                          const m = selectedOrder.instructions.match(/Montant en espèces annoncé:\s*([0-9.,]+)/)
+                          if (m) cash = Number(m[1].replace(/,/g, '.'))
+                        }
+                        if (!cash) return null
+                        return (
+                          <>
+                            <p>
+                              <span className="text-gray-500">Montant en espèces annoncé:</span> {Number(cash).toFixed(2)} f
+                            </p>
+                            <p>
+                              <span className="text-gray-500">Monnaie à préparer:</span> {Number(cash - selectedOrder.total).toFixed(2)} f
+                            </p>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Status Update */}

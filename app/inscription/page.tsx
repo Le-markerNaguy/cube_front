@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,9 +21,12 @@ export default function InscriptionPage() {
   const [formData, setFormData] = useState({
     phone: "",
     name: "",
+    email: "",
     password: "",
     confirmPassword: "",
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [isEmailValid, setIsEmailValid] = useState<boolean>(true)
 
   const { register, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
@@ -44,6 +46,16 @@ export default function InscriptionPage() {
   const allPasswordChecks = passwordChecks.length && passwordChecks.uppercase && passwordChecks.number
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
+  const handleEmailChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, email: value }))
+    if (value === "") {
+      setIsEmailValid(true)
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    setIsEmailValid(emailRegex.test(value))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -58,22 +70,38 @@ export default function InscriptionPage() {
       return
     }
 
-    const result = await register({
-      nom_complet: formData.name,
-      telephone: formData.phone,
-      mot_de_passe: formData.password,
-    })
+    if (formData.email && !isEmailValid) {
+      setError("Email invalide")
+      return
+    }
 
-    if (result.success) {
+    setSubmitting(true)
+
+    try {
+      const result = await register({
+        nom_complet: formData.name,
+        telephone: formData.phone,
+        email: formData.email || undefined,
+        mot_de_passe: formData.password,
+      })
+
+      if (!result.success) {
+        setError(result.error || "Erreur lors de l'inscription")
+        setSubmitting(false)
+        return
+      }
+
       router.push("/menu")
-    } else {
-      setError(result.error || "Erreur lors de l'inscription")
+    } catch (err) {
+      console.error(err)
+      setError("Erreur lors de la requête d'inscription")
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
@@ -91,17 +119,15 @@ export default function InscriptionPage() {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="phone">Numéro de téléphone *</Label>
-                <div className="flex">
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="XXX XXX XXX"
-                    className="rounded-l-none"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                  />
-                </div>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="XXX XXX XXX"
+                  className="w-full"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -113,8 +139,32 @@ export default function InscriptionPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  className="w-full"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email (optionnel)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="votre@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  className="w-full"
+                  aria-invalid={!isEmailValid}
+                  aria-describedby="email-help"
+                />
+                {formData.email ? (
+                  !isEmailValid ? (
+                    <p id="email-help" className="text-sm text-red-600">Email invalide</p>
+                  ) : (
+                    <p id="email-help" className="text-sm text-muted-foreground">Email optionnel, utilisé pour retrouver votre compte</p>
+                  )
+                ) : (
+                  <p id="email-help" className="text-sm text-muted-foreground">Email optionnel, utilisé pour retrouver votre compte</p>
+                )}
+              </div> 
 
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe *</Label>
@@ -126,6 +176,7 @@ export default function InscriptionPage() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    className="w-full"
                   />
                   <button
                     type="button"
@@ -171,6 +222,7 @@ export default function InscriptionPage() {
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
+                    className="w-full"
                   />
                   <button
                     type="button"
@@ -185,7 +237,7 @@ export default function InscriptionPage() {
                 )}
               </div>
 
-              <div className="flex items-start gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                 <Checkbox
                   id="terms"
                   checked={acceptTerms}
@@ -199,10 +251,10 @@ export default function InscriptionPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6"
-                disabled={!acceptTerms || isLoading || !allPasswordChecks || !passwordsMatch}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-3 sm:py-6"
+                disabled={!acceptTerms || submitting || isLoading || !allPasswordChecks || !passwordsMatch || (!!formData.email && !isEmailValid)}
               >
-                {isLoading ? (
+                {submitting || isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Création du compte...
@@ -222,7 +274,7 @@ export default function InscriptionPage() {
           </div>
 
           {/* Right Side - Benefits */}
-          <div className="bg-secondary/30 rounded-2xl p-8 lg:p-12">
+          <div className="bg-secondary rounded-ms p-6 sm:p-8 lg:p-12">
             <h2 className="text-2xl font-bold mb-2">Pourquoi rejoindre CUBE ?</h2>
             <p className="text-muted-foreground mb-8">Découvrez tous les avantages de votre compte</p>
 
@@ -261,7 +313,7 @@ export default function InscriptionPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
               <div>
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Users className="w-5 h-5 text-primary" />
